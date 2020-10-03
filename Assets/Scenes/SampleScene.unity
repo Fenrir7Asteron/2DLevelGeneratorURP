@@ -206,7 +206,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 11.74
+  orthographic size: 10
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -230,7 +230,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -1.56, z: -10}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -292,16 +292,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73947dd43e8785d40879b1e41abc490a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelWidth: 28
-  levelHeight: 30
-  backgrounds:
-  - {fileID: 11400000, guid: 993d6a1e9ed27ce4f89d2f1c6645f1d1, type: 2}
-  - {fileID: 11400000, guid: 743bc58b737a5b24dabc40b61c40b486, type: 2}
-  - {fileID: 11400000, guid: fe9ec74fbb489ac4aba6566dc042089e, type: 2}
-  - {fileID: 11400000, guid: 4c1f82f203fef844b8f998af99fa25ae, type: 2}
-  - {fileID: 11400000, guid: 3f587c649338bff4e8b6574399ad8493, type: 2}
-  - {fileID: 11400000, guid: 3e224ae62ffc3b647ba8c4cc5b50041e, type: 2}
-  - {fileID: 11400000, guid: 2ed31557590b56c4ea89d523b7f382a0, type: 2}
+  halfWidthInTiles: 14
+  halfHeightInTiles: 15
+  maxEmptySpaces: 0.45
   obstacle:
   - {fileID: 11400000, guid: 28bce1757f986154da1be7ad28e1c8f6, type: 2}
   - {fileID: 11400000, guid: fc932f5026a8c974cbf986333855a221, type: 2}
@@ -322,4 +315,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: eead86aa71f1fd340aae126ca576f837, type: 2}
   - {fileID: 11400000, guid: 98cb120845bb1ff4782a828daee39e70, type: 2}
   tilemap: {fileID: 2675987771354692762, guid: fcc2ad3bdb877f849adda231300bc15e, type: 3}
-  tilemapMaterial: {fileID: 2100000, guid: 53cd1ed74b69bb346b32b5568d05682e, type: 2}
+  tilemapMaterial: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  mainCamera: {fileID: 519420031}
