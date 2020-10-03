@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,9 +8,10 @@ using Random = UnityEngine.Random;
 public class LevelGenerator : MonoBehaviour
 {
     [Header("Level parameters")]
-    [SerializeField] private int halfWidthInTiles = 14;
-    [SerializeField] private int halfHeightInTiles = 15;
-    [SerializeField] [Range(0.4f, 1.0f)] private float maxEmptySpaces = 0.45f;
+    [SerializeField] [Range(8, 30)] private int halfWidthInTiles = 14;
+    [SerializeField] [Range(8, 30)] private int halfHeightInTiles = 15;
+    [SerializeField] [Range(0.45f, 1.0f)] private float maxEmptySpaces = 0.45f;
+    [SerializeField] private bool generateLevel = false;
 
     [Header("Level tiles")]
     [SerializeField] private Tile[] obstacle;
@@ -471,7 +471,7 @@ public class LevelGenerator : MonoBehaviour
         renderer.sortingLayerName = name;
     }
 
-    private enum TileDirection : int
+    private enum TileDirection
     {
         TopLeft,
         Top,
@@ -484,7 +484,7 @@ public class LevelGenerator : MonoBehaviour
         Middle,
     }
 
-    private enum MoveDirection : int
+    private enum MoveDirection
     {
         Up,
         Right,
@@ -492,9 +492,12 @@ public class LevelGenerator : MonoBehaviour
         Left,
     }
     
-    // Update is called once per frame
     void Update()
     {
-        
+        if (generateLevel)
+        {
+            GenerateLevel();
+            generateLevel = false;
+        }
     }
 }
