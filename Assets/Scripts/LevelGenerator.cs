@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -11,7 +12,13 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] [Range(8, 30)] private int halfWidthInTiles = 14;
     [SerializeField] [Range(8, 30)] private int halfHeightInTiles = 15;
     [SerializeField] [Range(0.45f, 1.0f)] private float maxEmptySpaces = 0.45f;
+    
+    [Header("Controls")]
     [SerializeField] private bool generateLevel = false;
+    [SerializeField] private String exportName = "";
+    [SerializeField] private bool exportLevel = false;
+    [SerializeField] private String importName = "";
+    [SerializeField] private bool importLevel = false;
 
     [Header("Level tiles")]
     [SerializeField] private Tile[] obstacle;
@@ -26,6 +33,7 @@ public class LevelGenerator : MonoBehaviour
     
     private Tilemap _foreground;
     private char[,] _levelTiles;
+    private char[,] _fullLevelTiles;
     
     // Up, Right, Down, Left moves
     private readonly Vector2Int[] _moves =
@@ -75,11 +83,11 @@ public class LevelGenerator : MonoBehaviour
                 // PrintLevel();
             }
 
-            var fullLevelTiles = MirrorLevel();
+            MirrorLevel();
             
-            if (ValidateLevel(fullLevelTiles))
+            if (ValidateLevel())
             {
-                RenderLevel(fullLevelTiles);
+                RenderLevel();
                 break;
             }
         }
@@ -90,16 +98,16 @@ public class LevelGenerator : MonoBehaviour
         return tiles[pos.x, pos.y] != 'W' && tiles[pos.x, pos.y] != 'B';
     }
 
-    private char[,] MirrorLevel()
+    private void MirrorLevel()
     {
         // fullLevelTiles is _levelTiles reflected horizontally and vertically - making symmetric level.
-        char[,] fullLevelTiles = new char[halfHeightInTiles * 2, halfWidthInTiles * 2];
+        _fullLevelTiles = new char[halfHeightInTiles * 2, halfWidthInTiles * 2];
         // Copy generated tiles
         for (int i = halfHeightInTiles; i < halfHeightInTiles * 2; ++i)
         {
             for (int j = halfWidthInTiles; j < halfWidthInTiles * 2; ++j)
             {
-                fullLevelTiles[i, j] = _levelTiles[i - halfHeightInTiles, j - halfWidthInTiles];
+                _fullLevelTiles[i, j] = _levelTiles[i - halfHeightInTiles, j - halfWidthInTiles];
             }
         }
         // Reflect horizontally
@@ -107,7 +115,7 @@ public class LevelGenerator : MonoBehaviour
         {
             for (int j = halfWidthInTiles - 1; j >= 0; --j)
             {
-                fullLevelTiles[i, j] = fullLevelTiles[i, halfWidthInTiles + (halfWidthInTiles - j - 1)];
+                _fullLevelTiles[i, j] = _fullLevelTiles[i, halfWidthInTiles + (halfWidthInTiles - j - 1)];
             }
         }
         // Reflect vertically
@@ -115,17 +123,15 @@ public class LevelGenerator : MonoBehaviour
         {
             for (int j = 0; j < halfWidthInTiles * 2; ++j)
             {
-                fullLevelTiles[i, j] = fullLevelTiles[halfHeightInTiles + (halfHeightInTiles - i - 1), j];
+                _fullLevelTiles[i, j] = _fullLevelTiles[halfHeightInTiles + (halfHeightInTiles - i - 1), j];
             }
         }
-
-        return fullLevelTiles;
     }
 
-    private bool ValidateLevel(char[,] fullLevelTiles)
+    private bool ValidateLevel()
     {
-        int height = fullLevelTiles.GetLength(0);
-        int width = fullLevelTiles.GetLength(1);
+        int height = _fullLevelTiles.GetLength(0);
+        int width = _fullLevelTiles.GetLength(1);
         int countEmptySpaces = 0;
         Vector2Int start = new Vector2Int(0, 0);
         bool[,] visited = new bool[height, width];
@@ -133,7 +139,7 @@ public class LevelGenerator : MonoBehaviour
         {
             for (int j = 0; j < width; ++j)
             {
-                if (Free(fullLevelTiles, new Vector2Int(i, j)))
+                if (Free(_fullLevelTiles, new Vector2Int(i, j)))
                 {
                     ++countEmptySpaces;
                     start = new Vector2Int(i, j);
@@ -147,7 +153,7 @@ public class LevelGenerator : MonoBehaviour
         {
             return false;
         }
-        dfs(start, fullLevelTiles, visited);
+        dfs(start, _fullLevelTiles, visited);
 
         int countVisited = 0;
         for (int i = 0; i < height; ++i)
@@ -185,16 +191,17 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
-    private void RenderLevel(char[,] fullLevelTiles)
+    private void RenderLevel()
     {
-        int height = fullLevelTiles.GetLength(0);
-        int width = fullLevelTiles.GetLength(1);
+        _foreground.ClearAllTiles();
+        int height = _fullLevelTiles.GetLength(0);
+        int width = _fullLevelTiles.GetLength(1);
         // Render walls
         for (int i = 1; i < height - 1; ++i)
         {
             for (int j = 1; j < width - 1; ++j)
             {
-                if (fullLevelTiles[i, j] != 'W')
+                if (_fullLevelTiles[i, j] != 'W')
                 {
                     continue;
                 }
@@ -204,41 +211,41 @@ public class LevelGenerator : MonoBehaviour
                 var down = current + _moves[(int) MoveDirection.Down];
                 var left = current + _moves[(int) MoveDirection.Left];
                 
-                if (Occupied(fullLevelTiles, new []{up, right, down, left}))
+                if (Occupied(_fullLevelTiles, new []{up, right, down, left}))
                 {
-                    RenderTile(i, j, fullLevelTiles, (int) TileDirection.Middle);
+                    RenderTile(i, j, _fullLevelTiles, (int) TileDirection.Middle);
                 }
-                else if (Occupied(fullLevelTiles, new []{right, down, left}))
+                else if (Occupied(_fullLevelTiles, new []{right, down, left}))
                 {
-                    RenderTile(i, j, fullLevelTiles, (int) TileDirection.Top);
+                    RenderTile(i, j, _fullLevelTiles, (int) TileDirection.Top);
                 }
-                else if (Occupied(fullLevelTiles, new []{up, down, left}))
+                else if (Occupied(_fullLevelTiles, new []{up, down, left}))
                 {
-                    RenderTile(i, j, fullLevelTiles, (int) TileDirection.Right);
+                    RenderTile(i, j, _fullLevelTiles, (int) TileDirection.Right);
                 } 
-                else if (Occupied(fullLevelTiles, new []{up, right, left}))
+                else if (Occupied(_fullLevelTiles, new []{up, right, left}))
                 {
-                    RenderTile(i, j, fullLevelTiles, (int) TileDirection.Bottom);
+                    RenderTile(i, j, _fullLevelTiles, (int) TileDirection.Bottom);
                 }
-                else if (Occupied(fullLevelTiles, new []{up, right, down}))
+                else if (Occupied(_fullLevelTiles, new []{up, right, down}))
                 {
-                    RenderTile(i, j, fullLevelTiles, (int) TileDirection.Left);
+                    RenderTile(i, j, _fullLevelTiles, (int) TileDirection.Left);
                 }
-                else if (Occupied(fullLevelTiles, new []{right, down}))
+                else if (Occupied(_fullLevelTiles, new []{right, down}))
                 {
-                    RenderTile(i, j, fullLevelTiles, (int) TileDirection.TopLeft);
+                    RenderTile(i, j, _fullLevelTiles, (int) TileDirection.TopLeft);
                 }
-                else if (Occupied(fullLevelTiles, new []{left, down}))
+                else if (Occupied(_fullLevelTiles, new []{left, down}))
                 {
-                    RenderTile(i, j, fullLevelTiles, (int) TileDirection.TopRight);
+                    RenderTile(i, j, _fullLevelTiles, (int) TileDirection.TopRight);
                 }
-                else if (Occupied(fullLevelTiles, new []{up, left}))
+                else if (Occupied(_fullLevelTiles, new []{up, left}))
                 {
-                    RenderTile(i, j, fullLevelTiles, (int) TileDirection.BottomRight);
+                    RenderTile(i, j, _fullLevelTiles, (int) TileDirection.BottomRight);
                 }
-                else if (Occupied(fullLevelTiles, new []{right, up}))
+                else if (Occupied(_fullLevelTiles, new []{right, up}))
                 {
-                    RenderTile(i, j, fullLevelTiles, (int) TileDirection.BottomLeft);
+                    RenderTile(i, j, _fullLevelTiles, (int) TileDirection.BottomLeft);
                 }
             }
         }
@@ -246,18 +253,18 @@ public class LevelGenerator : MonoBehaviour
         // Render borders
         for (int i = 1; i < height - 1; ++i)
         {
-            RenderTile(i, 0, fullLevelTiles, (int) TileDirection.Left);
-            RenderTile(i, width - 1, fullLevelTiles, (int) TileDirection.Right);
+            RenderTile(i, 0, _fullLevelTiles, (int) TileDirection.Left);
+            RenderTile(i, width - 1, _fullLevelTiles, (int) TileDirection.Right);
         }
         for (int j = 1; j < width - 1; ++j)
         {
-            RenderTile(0, j, fullLevelTiles, (int) TileDirection.Bottom);
-            RenderTile(height - 1,j, fullLevelTiles, (int) TileDirection.Top);
+            RenderTile(0, j, _fullLevelTiles, (int) TileDirection.Bottom);
+            RenderTile(height - 1,j, _fullLevelTiles, (int) TileDirection.Top);
         }
-        RenderTile(0, 0, fullLevelTiles, (int) TileDirection.BottomLeft);
-        RenderTile(0, width - 1, fullLevelTiles, (int) TileDirection.BottomRight);
-        RenderTile(height - 1, width - 1, fullLevelTiles, (int) TileDirection.TopRight);
-        RenderTile(height - 1, 0, fullLevelTiles, (int) TileDirection.TopLeft);
+        RenderTile(0, 0, _fullLevelTiles, (int) TileDirection.BottomLeft);
+        RenderTile(0, width - 1, _fullLevelTiles, (int) TileDirection.BottomRight);
+        RenderTile(height - 1, width - 1, _fullLevelTiles, (int) TileDirection.TopRight);
+        RenderTile(height - 1, 0, _fullLevelTiles, (int) TileDirection.TopLeft);
     }
 
     private void RenderTile(int x, int y, char[,] tileTable, int tile)
@@ -498,6 +505,79 @@ public class LevelGenerator : MonoBehaviour
         {
             GenerateLevel();
             generateLevel = false;
+        }
+
+        if (exportLevel)
+        {
+            exportLevel = false;
+            if (!Directory.Exists("Assets/Levels"))
+            {
+                Directory.CreateDirectory("Assets/Levels");
+            }
+            String exportPath = String.Concat("Assets/Levels/", exportName);
+            System.IO.FileInfo fi = null;
+            try {
+                fi = new System.IO.FileInfo(exportPath);
+            }
+            catch (ArgumentException) { }
+            catch (System.IO.PathTooLongException) { }
+            catch (NotSupportedException) { }
+            if (!ReferenceEquals(fi, null)) {
+                using (var sw = new StreamWriter(exportPath))
+                {
+                    for (int i = 0; i < _fullLevelTiles.GetLength(0); i++)
+                    {
+                        for (int j = 0; j < _fullLevelTiles.GetLength(1); j++)
+                        {
+                            sw.Write(_fullLevelTiles[i, j]);
+                        }
+                        sw.Write("\n");
+                    }
+
+                    sw.Flush();
+                    sw.Close();
+                }
+            }
+        }
+
+        if (importLevel)
+        {
+            importLevel = false;
+            if (!Directory.Exists("Assets/Levels"))
+            {
+                Debug.Log("Directory 'Assets/Levels/' does not exist, nothing to import.");
+                return;
+            }
+            String importPath = String.Concat("Assets/Levels/", importName);
+            System.IO.FileInfo fi = null;
+            try {
+                fi = new System.IO.FileInfo(importPath);
+            }
+            catch (ArgumentException) { }
+            catch (System.IO.PathTooLongException) { }
+            catch (NotSupportedException) { }
+            if (!ReferenceEquals(fi, null)) {
+                using (var sr = new StreamReader(importPath))
+                {
+                    for (int i = 0; i < _fullLevelTiles.GetLength(0); i++)
+                    {
+                        String line = sr.ReadLine();
+                        if (!ReferenceEquals(line, null))
+                        {
+                            for (int j = 0; j < _fullLevelTiles.GetLength(1); j++)
+                            {
+                                if (j < line.Length)
+                                {
+                                    _fullLevelTiles[i, j] = line[j];
+                                }
+                            }
+                        }
+                    }
+                    sr.Close();
+                    
+                    RenderLevel();
+                }
+            }
         }
     }
 }

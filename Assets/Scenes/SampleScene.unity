@@ -295,6 +295,11 @@ MonoBehaviour:
   halfWidthInTiles: 14
   halfHeightInTiles: 15
   maxEmptySpaces: 0.45
+  generateLevel: 0
+  exportName: level1.txt
+  exportLevel: 0
+  importName: level1.txt
+  importLevel: 0
   obstacle:
   - {fileID: 11400000, guid: 28bce1757f986154da1be7ad28e1c8f6, type: 2}
   - {fileID: 11400000, guid: fc932f5026a8c974cbf986333855a221, type: 2}
