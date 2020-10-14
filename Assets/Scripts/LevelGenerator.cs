@@ -108,6 +108,10 @@ public class LevelGenerator : MonoBehaviour
             for (int j = halfWidthInTiles; j < halfWidthInTiles * 2; ++j)
             {
                 _fullLevelTiles[i, j] = _levelTiles[i - halfHeightInTiles, j - halfWidthInTiles];
+                if (_fullLevelTiles[i, j] == 'C')
+                {
+                    _fullLevelTiles[i, j] = '.';
+                }
             }
         }
         // Reflect horizontally
